@@ -73,23 +73,25 @@ void type_writer(zval *value, zend_long row, zend_long columns, xls_resource_wri
         return;
     }
 
-    if (value_type == IS_BOOL) {
+    if (value_type == IS_TRUE || value_type == IS_FALSE) {
+        int bool_value = (value_type == IS_TRUE) ? 1 : 0;
+
         if (format != NULL && format_handle == NULL) {
-            WORKSHEET_WRITER_EXCEPTION(worksheet_write_boolean(res->worksheet, lxw_row, lxw_col, (int)zval_get_bool(value), format_handle));
+            WORKSHEET_WRITER_EXCEPTION(worksheet_write_boolean(res->worksheet, lxw_row, lxw_col, bool_value, format_handle));
             return;
         }
 
         if (format == NULL && format_handle != NULL) {
-            WORKSHEET_WRITER_EXCEPTION(worksheet_write_boolean(res->worksheet, lxw_row, lxw_col, (int)zval_get_bool(value), format_handle));
+            WORKSHEET_WRITER_EXCEPTION(worksheet_write_boolean(res->worksheet, lxw_row, lxw_col, bool_value, format_handle));
             return;
         }
 
         if(format != NULL && format_handle != NULL) {
-            WORKSHEET_WRITER_EXCEPTION(worksheet_write_boolean(res->worksheet, lxw_row, lxw_col, (int)zval_get_bool(value), format_handle));
+            WORKSHEET_WRITER_EXCEPTION(worksheet_write_boolean(res->worksheet, lxw_row, lxw_col, bool_value, format_handle));
             return;
         }
 
-        WORKSHEET_WRITER_EXCEPTION(worksheet_write_boolean(res->worksheet, lxw_row, lxw_col, (int)zval_get_bool(value), NULL));
+        WORKSHEET_WRITER_EXCEPTION(worksheet_write_boolean(res->worksheet, lxw_row, lxw_col, bool_value, NULL));
     }
 }
 
