@@ -1,6 +1,7 @@
 #include "xlswriter.h"
 #include "ext/standard/php_string.h"
 #include "conditional_format.h"
+#include "format.h"
 
 zend_class_entry *vtiful_conditional_format_ce;
 static zend_object_handlers vtiful_conditional_format_handlers;
@@ -25,6 +26,9 @@ static void vtiful_conditional_format_objects_free(zend_object *object)
 {
     conditional_format_object *obj = php_vtiful_conditional_format_fetch_object(object);
     if (obj->format) {
+        if (obj->format->value_string) {
+            efree(obj->format->value_string);
+        }
         free(obj->format);
     }
     zend_object_std_dtor(&obj->zo);
@@ -34,7 +38,7 @@ PHP_VTIFUL_API lxw_conditional_format *zval_get_conditional_format(zval *resourc
 {
     conditional_format_object *obj = NULL;
     if ((obj = (conditional_format_object *)zend_fetch_resource(Z_RES_P(resource), VTIFUL_RESOURCE_NAME, le_xls_conditional_format)) == NULL) {
-        RETURN_FALSE;
+        return NULL;
     }
     return obj->format;
 }
@@ -105,6 +109,10 @@ PHP_METHOD(vtiful_conditional_format, setFormat)
     conditional_format_object *obj = Z_CONDITIONAL_FORMAT_P(getThis());
     format_ht = Z_ARRVAL_P(format);
 
+    if (!obj->format->format) {
+        obj->format->format = calloc(1, sizeof(lxw_format));
+    }
+
     if ((bg_color = zend_hash_str_find(format_ht, ZEND_STRL("bg_color"))) != NULL) {
         obj->format->format->bg_color = format_color_string_to_number(Z_STRVAL_P(bg_color));
     }
@@ -126,6 +134,12 @@ PHP_METHOD(vtiful_conditional_format, setValue)
 
     conditional_format_object *obj = Z_CONDITIONAL_FORMAT_P(getThis());
 
+    // Free existing value_string if it exists
+    if (obj->format->value_string) {
+        efree(obj->format->value_string);
+        obj->format->value_string = NULL;
+    }
+
     switch (Z_TYPE_P(value)) {
         case IS_LONG:
             obj->format->value = Z_LVAL_P(value);
@@ -134,7 +148,7 @@ PHP_METHOD(vtiful_conditional_format, setValue)
             obj->format->value = Z_DVAL_P(value);
             break;
         case IS_STRING:
-            obj->format->value_string = zend_string_copy(Z_STR_P(value));
+            obj->format->value_string = estrndup(Z_STRVAL_P(value), Z_STRLEN_P(value));
             break;
     }
 
@@ -208,7 +222,7 @@ PHP_METHOD(vtiful_conditional_format, setIconStyle)
     conditional_format_object *obj = Z_CONDITIONAL_FORMAT_P(getThis());
 
     obj->format->icon_style = style;
-    obj->format->icons_reverse = reverse;
+    obj->format->reverse_icons = reverse;
     obj->format->icons_only = icons_only;
 
     RETURN_ZVAL(getThis(), 1, 0);
@@ -270,47 +284,41 @@ VTIFUL_STARTUP_FUNCTION(conditional_format)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_BLANKS",        LXW_CONDITIONAL_TYPE_BLANKS)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_NO_BLANKS",     LXW_CONDITIONAL_TYPE_NO_BLANKS)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_FORMULA",       LXW_CONDITIONAL_TYPE_FORMULA)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_2_COLOR_SCALE", LXW_CONDITIONAL_2_COLOR_SCALE)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_3_COLOR_SCALE", LXW_CONDITIONAL_3_COLOR_SCALE)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_DATA_BAR",      LXW_CONDITIONAL_DATA_BAR)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_ICON_SETS",     LXW_CONDITIONAL_ICON_SETS)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_2_COLOR_SCALE", LXW_CONDITIONAL_TYPE_2_COLOR_SCALE)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_3_COLOR_SCALE", LXW_CONDITIONAL_TYPE_3_COLOR_SCALE)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_DATA_BAR",      LXW_CONDITIONAL_TYPE_DATA_BAR)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_ICON_SETS",     LXW_CONDITIONAL_TYPE_ICON_SETS)
 
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_EQUAL_TO",                  LXW_CONDITIONAL_CRITERIA_EQUAL_TO)
+    /* Criteria constants */
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_EQUAL_TO",                 LXW_CONDITIONAL_CRITERIA_EQUAL_TO)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_NOT_EQUAL_TO",              LXW_CONDITIONAL_CRITERIA_NOT_EQUAL_TO)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_GREATER_THAN",              LXW_CONDITIONAL_CRITERIA_GREATER_THAN)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_LESS_THAN",                 LXW_CONDITIONAL_CRITERIA_LESS_THAN)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_GREATER_THAN_OR_EQUAL_TO",  LXW_CONDITIONAL_CRITERIA_GREATER_THAN_OR_EQUAL_TO)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_LESS_THAN_OR_EQUAL_TO",     LXW_CONDITIONAL_CRITERIA_LESS_THAN_OR_EQUAL_TO)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_BETWEEN",                    LXW_CONDITIONAL_CRITERIA_BETWEEN)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_BETWEEN",                   LXW_CONDITIONAL_CRITERIA_BETWEEN)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_NOT_BETWEEN",               LXW_CONDITIONAL_CRITERIA_NOT_BETWEEN)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_TEXT_CONTAINING",           LXW_CONDITIONAL_CRITERIA_TEXT_CONTAINING)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_TEXT_NOT_CONTAINING",       LXW_CONDITIONAL_CRITERIA_TEXT_NOT_CONTAINING)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_TEXT_BEGINS_WITH",          LXW_CONDITIONAL_CRITERIA_TEXT_BEGINS_WITH)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_TEXT_ENDS_WITH",            LXW_CONDITIONAL_CRITERIA_TEXT_ENDS_WITH)
 
-    /* Icon style constants */
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_ARROWS",           LXW_CONDITIONAL_ICONS_3_ARROWS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_FLAGS",            LXW_CONDITIONAL_ICONS_3_FLAGS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_TRAFFIC_LIGHTS",   LXW_CONDITIONAL_ICONS_3_TRAFFIC_LIGHTS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_SIGNS",            LXW_CONDITIONAL_ICONS_3_SIGNS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_SYMBOLS",          LXW_CONDITIONAL_ICONS_3_SYMBOLS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_4_ARROWS",           LXW_CONDITIONAL_ICONS_4_ARROWS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_4_RED_TO_BLACK",     LXW_CONDITIONAL_ICONS_4_RED_TO_BLACK)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_4_TRAFFIC_LIGHTS",   LXW_CONDITIONAL_ICONS_4_TRAFFIC_LIGHTS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_5_ARROWS",           LXW_CONDITIONAL_ICONS_5_ARROWS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_5_QUARTERS",         LXW_CONDITIONAL_ICONS_5_QUARTERS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_5_RATINGS",          LXW_CONDITIONAL_ICONS_5_RATINGS)
+    /* Time period criteria constants */
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_TODAY",         LXW_CONDITIONAL_CRITERIA_TIME_PERIOD_TODAY)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_YESTERDAY",     LXW_CONDITIONAL_CRITERIA_TIME_PERIOD_YESTERDAY)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_LAST_7_DAYS",   LXW_CONDITIONAL_CRITERIA_TIME_PERIOD_LAST_7_DAYS)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_LAST_WEEK",     LXW_CONDITIONAL_CRITERIA_TIME_PERIOD_LAST_WEEK)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_THIS_WEEK",     LXW_CONDITIONAL_CRITERIA_TIME_PERIOD_THIS_WEEK)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_NEXT_WEEK",     LXW_CONDITIONAL_CRITERIA_TIME_PERIOD_NEXT_WEEK)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_LAST_MONTH",    LXW_CONDITIONAL_CRITERIA_TIME_PERIOD_LAST_MONTH)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_THIS_MONTH",    LXW_CONDITIONAL_CRITERIA_TIME_PERIOD_THIS_MONTH)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_NEXT_MONTH",    LXW_CONDITIONAL_CRITERIA_TIME_PERIOD_NEXT_MONTH)
 
-    /* Time period constants */
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_TODAY",         LXW_CONDITIONAL_TIME_PERIOD_TODAY)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_YESTERDAY",     LXW_CONDITIONAL_TIME_PERIOD_YESTERDAY)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_LAST_7_DAYS",   LXW_CONDITIONAL_TIME_PERIOD_LAST_7_DAYS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_LAST_WEEK",     LXW_CONDITIONAL_TIME_PERIOD_LAST_WEEK)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_THIS_WEEK",     LXW_CONDITIONAL_TIME_PERIOD_THIS_WEEK)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_NEXT_WEEK",     LXW_CONDITIONAL_TIME_PERIOD_NEXT_WEEK)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_LAST_MONTH",    LXW_CONDITIONAL_TIME_PERIOD_LAST_MONTH)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_THIS_MONTH",    LXW_CONDITIONAL_TIME_PERIOD_THIS_MONTH)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TIME_PERIOD_NEXT_MONTH",    LXW_CONDITIONAL_TIME_PERIOD_NEXT_MONTH)
+    /* Icon style constants */
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_TRAFFIC_LIGHTS", LXW_CONDITIONAL_TYPE_ICON_TRAFFIC_LIGHTS_3)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_SIGNS",          LXW_CONDITIONAL_TYPE_ICON_SIGNS_3)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_4_TRAFFIC_LIGHTS", LXW_CONDITIONAL_TYPE_ICON_TRAFFIC_LIGHTS_4)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_5_QUARTERS",       LXW_CONDITIONAL_TYPE_ICON_QUARTERS_5)
 
     return SUCCESS;
 }
