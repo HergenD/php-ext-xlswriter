@@ -1838,6 +1838,8 @@ PHP_METHOD(vtiful_xls, setConditionalFormat)
 {
     zend_string *range = NULL;
     zval *conditional_format_obj = NULL;
+    lxw_row_t first_row, last_row;
+    lxw_col_t first_col, last_col;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
         Z_PARAM_STR(range)
@@ -1855,9 +1857,17 @@ PHP_METHOD(vtiful_xls, setConditionalFormat)
         RETURN_FALSE;
     }
 
+    // Convert range string (like "A1:B10") to row/col values
+    if (lxw_name_to_row_col_abs(ZSTR_VAL(range), &first_row, &first_col, &last_row, &last_col) != LXW_NO_ERROR) {
+        RETURN_FALSE;
+    }
+
     lxw_error error = worksheet_conditional_format_range(
         obj->write_ptr.worksheet,
-        ZSTR_VAL(range),
+        first_row,
+        first_col,
+        last_row,
+        last_col,
         format_obj->format
     );
 
