@@ -2,6 +2,7 @@
 #include "ext/standard/php_string.h"
 #include "conditional_format.h"
 #include "format.h"
+#include "help.h"
 
 zend_class_entry *vtiful_conditional_format_ce;
 static zend_object_handlers vtiful_conditional_format_handlers;
@@ -289,10 +290,16 @@ VTIFUL_STARTUP_FUNCTION(conditional_format)
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "TYPE_ICON_SETS",     LXW_CONDITIONAL_TYPE_ICON_SETS)
 
     /* Icon style constants */
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_TRAFFIC_LIGHTS", LXW_CONDITIONAL_ICONS_3_TRAFFIC_LIGHTS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_SIGNS",          LXW_CONDITIONAL_ICONS_3_SIGNS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_4_TRAFFIC_LIGHTS", LXW_CONDITIONAL_ICONS_4_TRAFFIC_LIGHTS)
-    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_5_QUARTERS",       LXW_CONDITIONAL_ICONS_5_QUARTERS)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_ARROWS",           LXW_CONDITIONAL_ICON_STYLE_3_ARROWS)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_FLAGS",            LXW_CONDITIONAL_ICON_STYLE_3_FLAGS)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_TRAFFIC_LIGHTS",   LXW_CONDITIONAL_ICON_STYLE_3_TRAFFIC_LIGHTS)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_SIGNS",            LXW_CONDITIONAL_ICON_STYLE_3_SIGNS)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_3_SYMBOLS",          LXW_CONDITIONAL_ICON_STYLE_3_SYMBOLS)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_4_ARROWS",           LXW_CONDITIONAL_ICON_STYLE_4_ARROWS)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_4_RED_TO_BLACK",     LXW_CONDITIONAL_ICON_STYLE_4_RED_TO_BLACK)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_4_TRAFFIC_LIGHTS",   LXW_CONDITIONAL_ICON_STYLE_4_TRAFFIC_LIGHTS)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_5_ARROWS",           LXW_CONDITIONAL_ICON_STYLE_5_ARROWS)
+    REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "ICON_STYLE_5_RATINGS",          LXW_CONDITIONAL_ICON_STYLE_5_RATINGS)
 
     /* Criteria constants */
     REGISTER_CLASS_CONST_LONG(vtiful_conditional_format_ce, "CRITERIA_EQUAL_TO",                 LXW_CONDITIONAL_CRITERIA_EQUAL_TO)
