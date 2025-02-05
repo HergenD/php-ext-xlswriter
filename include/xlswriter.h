@@ -35,6 +35,7 @@
 #include "excel.h"
 #include "validation.h"
 #include "exception.h"
+#include "conditional_format.h"
 #include "format.h"
 #include "chart.h"
 #include "rich_string.h"

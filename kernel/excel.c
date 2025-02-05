@@ -339,6 +339,11 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(xls_first_sheet_arginfo, 0, 0, 0)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(xls_set_conditional_format_arginfo, 0, 0, 2)
+    ZEND_ARG_INFO(0, range)
+    ZEND_ARG_OBJ_INFO(0, conditional_format, Vtiful\\Kernel\\ConditionalFormat, 0)
+ZEND_END_ARG_INFO()
 /* }}} */
 
 /** {{{ \Vtiful\Kernel\Excel::__construct(array $config)
@@ -1486,6 +1491,49 @@ PHP_METHOD(vtiful_xls, validation)
 }
 /* }}} */
 
+/** {{{ \Vtiful\Kernel\Excel::setConditionalFormat(string $range, \Vtiful\Kernel\ConditionalFormat $conditionalFormat)
+ */
+PHP_METHOD(vtiful_xls, setConditionalFormat)
+{
+    zend_string *range = NULL;
+    zval *conditional_format_obj = NULL;
+    lxw_row_t first_row, last_row;
+    lxw_col_t first_col, last_col;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_STR(range)
+        Z_PARAM_OBJECT_OF_CLASS(conditional_format_obj, vtiful_conditional_format_ce)
+    ZEND_PARSE_PARAMETERS_END();
+
+    ZVAL_COPY(return_value, getThis());
+
+    xls_object *obj = Z_XLS_P(getThis());
+
+    WORKBOOK_NOT_INITIALIZED(obj);
+
+    conditional_format_object *format_obj = Z_CONDITIONAL_FORMAT_P(conditional_format_obj);
+    if (!format_obj) {
+        RETURN_FALSE;
+    }
+
+    // Convert range string (like "A1:B10") to row/col values
+    if (lxw_name_to_row_col_abs(ZSTR_VAL(range), &first_row, &first_col, &last_row, &last_col) != LXW_NO_ERROR) {
+        RETURN_FALSE;
+    }
+
+    lxw_error error = worksheet_conditional_format_range(
+        obj->write_ptr.worksheet,
+        first_row,
+        first_col,
+        last_row,
+        last_col,
+        format_obj->format
+    );
+
+    WORKSHEET_WRITER_EXCEPTION(error);
+}
+/* }}} */
+
 #ifdef ENABLE_READER
 
 /** {{{ \Vtiful\Kernel\Excel::openFile()
@@ -1884,6 +1932,8 @@ zend_function_entry xls_methods[] = {
         PHP_ME(vtiful_xls, columnIndexFromString,   xls_index_to_string, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
         PHP_ME(vtiful_xls, stringFromColumnIndex,   xls_string_to_index, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
         PHP_ME(vtiful_xls, timestampFromDateDouble, xls_string_to_index, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+
+        PHP_ME(vtiful_xls, setConditionalFormat, xls_set_conditional_format_arginfo, ZEND_ACC_PUBLIC)
 
 #ifdef ENABLE_READER
         PHP_ME(vtiful_xls, openFile,         xls_open_file_arginfo,          ZEND_ACC_PUBLIC)

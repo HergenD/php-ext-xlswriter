@@ -44,6 +44,7 @@ if test "$PHP_XLSWRITER" != "no"; then
     kernel/rich_string.c \
     kernel/validation.c \
     kernel/write.c \
+    kernel/conditional_format.c \
     "
 
     xls_read_sources="
