@@ -1516,10 +1516,10 @@ PHP_METHOD(vtiful_xls, setConditionalFormat)
         RETURN_FALSE;
     }
 
-    // Convert range string (like "A1:B10") to row/col values
-    if (check_worksheet_range(ZSTR_VAL(range), &first_row, &first_col, &last_row, &last_col)) {
-        RETURN_FALSE;
-    }
+    first_row = ROW(ZSTR_VAL(range));
+    last_row = lxw_name_to_row_2(ZSTR_VAL(range));
+    first_col = lxw_name_to_col(ZSTR_VAL(range));
+    last_col = lxw_name_to_col_2(ZSTR_VAL(range));
 
     lxw_error error = worksheet_conditional_format_range(
         obj->write_ptr.worksheet,
