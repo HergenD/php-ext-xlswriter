@@ -115,11 +115,11 @@ PHP_METHOD(vtiful_conditional_format, setFormat)
     }
 
     if ((bg_color = zend_hash_str_find(format_ht, ZEND_STRL("bg_color"))) != NULL) {
-        obj->format->format->bg_color = format_color_string_to_number(Z_STRVAL_P(bg_color));
+        obj->format->format->bg_color = Z_LVAL_P(bg_color);
     }
 
     if ((fg_color = zend_hash_str_find(format_ht, ZEND_STRL("font_color"))) != NULL) {
-        obj->format->format->font_color = format_color_string_to_number(Z_STRVAL_P(fg_color));
+        obj->format->format->font_color = Z_LVAL_P(fg_color);
     }
 
     RETURN_ZVAL(getThis(), 1, 0);
@@ -172,19 +172,19 @@ PHP_METHOD(vtiful_conditional_format, setCriteria)
 
 PHP_METHOD(vtiful_conditional_format, setColorScale)
 {
-    zend_string *min_color, *mid_color, *max_color;
+    zend_long min_color, mid_color, max_color;
 
     ZEND_PARSE_PARAMETERS_START(3, 3)
-        Z_PARAM_STR(min_color)
-        Z_PARAM_STR(mid_color)
-        Z_PARAM_STR(max_color)
+        Z_PARAM_LONG(min_color)
+        Z_PARAM_LONG(mid_color)
+        Z_PARAM_LONG(max_color)
     ZEND_PARSE_PARAMETERS_END();
 
     conditional_format_object *obj = Z_CONDITIONAL_FORMAT_P(getThis());
 
-    obj->format->min_color = format_color_string_to_number(ZSTR_VAL(min_color));
-    obj->format->mid_color = format_color_string_to_number(ZSTR_VAL(mid_color));
-    obj->format->max_color = format_color_string_to_number(ZSTR_VAL(max_color));
+    obj->format->min_color = min_color;
+    obj->format->mid_color = mid_color;
+    obj->format->max_color = max_color;
 
     RETURN_ZVAL(getThis(), 1, 0);
 }
