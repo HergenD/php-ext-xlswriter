@@ -339,6 +339,11 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(xls_first_sheet_arginfo, 0, 0, 0)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(xls_conditional_format_range_arginfo, 0, 0, 2)
+                ZEND_ARG_INFO(0, range)
+                ZEND_ARG_INFO(0, conditional_format)
+ZEND_END_ARG_INFO()
 /* }}} */
 
 /** {{{ \Vtiful\Kernel\Excel::__construct(array $config)
@@ -1486,6 +1491,33 @@ PHP_METHOD(vtiful_xls, validation)
 }
 /* }}} */
 
+/** {{{ \Vtiful\Kernel\Excel::conditionalFormatRange(string $range, object $conditional_format)
+ */
+PHP_METHOD(vtiful_xls, conditionalFormatRange)
+{
+    zend_string *range = NULL;
+    zval *conditional_format_handle = NULL;
+    xls_object *obj;
+    conditional_format_object *cond_obj;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+            Z_PARAM_STR(range)
+            Z_PARAM_OBJECT(conditional_format_handle)
+    ZEND_PARSE_PARAMETERS_END();
+
+    ZVAL_COPY(return_value, getThis());
+
+    obj = Z_XLS_P(getThis());
+    WORKBOOK_NOT_INITIALIZED(obj);
+
+    cond_obj = Z_COND_FORMAT_P(conditional_format_handle);
+
+    worksheet_conditional_format_range(obj->write_ptr.worksheet,
+                                    RANGE(ZSTR_VAL(range)),
+                                    cond_obj->ptr.conditional_format);
+}
+/* }}} */
+
 #ifdef ENABLE_READER
 
 /** {{{ \Vtiful\Kernel\Excel::openFile()
@@ -1863,6 +1895,8 @@ zend_function_entry xls_methods[] = {
         PHP_ME(vtiful_xls, setCurrentLine,    xls_set_curr_line_arginfo,           ZEND_ACC_PUBLIC)
         PHP_ME(vtiful_xls, defaultFormat,     xls_set_global_format,               ZEND_ACC_PUBLIC)
         PHP_ME(vtiful_xls, defaultRowOptions, xls_set_default_row_options_arginfo, ZEND_ACC_PUBLIC)
+
+        PHP_ME(vtiful_xls, conditionalFormatRange, xls_conditional_format_range_arginfo, ZEND_ACC_PUBLIC)
 
         PHP_ME(vtiful_xls, freezePanes,    xls_freeze_panes_arginfo,   ZEND_ACC_PUBLIC)
 

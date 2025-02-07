@@ -105,6 +105,10 @@ typedef struct {
     lxw_rich_string_tuple *tuple;
 } xls_resource_rich_string_t;
 
+typedef struct {
+    lxw_conditional_format *conditional_format;
+} xls_resource_conditional_format_t;
+
 typedef struct _vtiful_xls_object {
     xls_resource_read_t          read_ptr;
     xls_resource_write_t         write_ptr;
@@ -135,6 +139,11 @@ typedef struct _vtiful_rich_string_object {
     zend_object zo;
 } rich_string_object;
 
+typedef struct _vtiful_conditional_format_object {
+    xls_resource_conditional_format_t ptr;
+    zend_object zo;
+} conditional_format_object;
+
 #define REGISTER_CLASS_CONST_LONG(class_name, const_name, value) \
     zend_declare_class_constant_long(class_name, const_name, sizeof(const_name)-1, (zend_long)value);
 
@@ -146,6 +155,7 @@ typedef struct _vtiful_rich_string_object {
 #define Z_FORMAT_P(zv)      php_vtiful_format_fetch_object(Z_OBJ_P(zv));
 #define Z_VALIDATION_P(zv)  php_vtiful_validation_fetch_object(Z_OBJ_P(zv));
 #define Z_RICH_STR_P(zv)    php_vtiful_rich_string_fetch_object(Z_OBJ_P(zv));
+#define Z_COND_FORMAT_P(zv) php_vtiful_conditional_format_fetch_object(Z_OBJ_P(zv))
 
 #define WORKBOOK_NOT_INITIALIZED(xls_object_t)                                                                       \
     do {                                                                                                             \
@@ -329,6 +339,7 @@ lxw_data_validation   * zval_get_validation(zval *resource);
 lxw_rich_string_tuple * zval_get_rich_string(zval *resource);
 xls_resource_write_t  * zval_get_resource(zval *handle);
 xls_resource_chart_t  * zval_get_chart(zval *resource);
+lxw_conditional_format* zval_get_conditional_format(zval *resource);
 
 STATIC lxw_error _store_defined_name(lxw_workbook *self, const char *name, const char *app_name, const char *formula, int16_t index, uint8_t hidden);
 
