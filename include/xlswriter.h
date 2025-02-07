@@ -39,6 +39,7 @@
 #include "chart.h"
 #include "rich_string.h"
 #include "help.h"
+#include "condition_format.h"
 
 #ifdef ENABLE_READER
 #include "xlsxio_read.h"
